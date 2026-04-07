@@ -1,0 +1,26 @@
+// definindo o banco de dados
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// tabela do trabalhador com todos os requisitos
+model Trabalhador {
+  id                String  @id @default(uuid())
+  email             String  @unique
+  senhaLogin        String
+  senhaPublica      String? // opcional no inicio
+  nome              String?
+  sobrenome         String?
+  sexo              String?
+  tipoSanguineo     String?
+  contatoEmergencia String?
+  alergias          String?
+  medicamentos      String?
+  doencas           String?
+  cirurgias         String?
+}
