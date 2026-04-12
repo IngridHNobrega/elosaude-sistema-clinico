@@ -1,4 +1,4 @@
-// importando as ferramentas necessarias
+// importando as ferramentas
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
@@ -7,46 +7,91 @@ const bcrypt = require('bcryptjs');
 const app = express();
 const prisma = new PrismaClient();
 
-// permitindo que o frontend converse com o backend
 app.use(cors());
 app.use(express.json());
 
-// rota de cadastro (rf01 e us01)
+const QRCode = require('qrcode'); // importando a ferramenta de qr code
+
+// rota de cadastro atualizada (rf01 e rf05)
 app.post('/cadastro', async (req, res) => {
-  try {
-    const { email, senha } = req.body;
-    // criptografando a senha (rnf01)
-    const senhaCriptografada = await bcrypt.hash(senha, 10);
+    try {
+        const { email, senha } = req.body;
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-    const novoUsuario = await prisma.trabalhador.create({
-      data: { email, senhaLogin: senhaCriptografada }
-    });
-    res.status(201).json({ mensagem: 'conta criada com sucesso!' });
-  } catch (error) {
-    res.status(400).json({ erro: 'erro ao criar conta ou email ja existe.' });
-  }
+        // 1. criamos o usuario no banco de dados
+        const novoUsuario = await prisma.trabalhador.create({
+            data: { 
+                email, 
+                senhaLogin: senhaCriptografada 
+            }
+        });
+
+        // 2. o link que o qr code vai carregar
+        // dps trocar o 'localhost:5173' pelo link real do site
+        const linkPublico = `http://localhost:5173/perfil-emergencia/${novoUsuario.id}`;
+
+        // 3. geramos o qr code em formato de imagem (base64)
+        const qrCodeImagem = await QRCode.toDataURL(linkPublico);
+
+        // enviamos a resposta com o qr code para o frontend guardar
+        res.status(201).json({ 
+            id: novoUsuario.id, 
+            mensagem: 'conta criada!',
+            qrCode: qrCodeImagem 
+        });
+
+    } catch (error) {
+        res.status(400).json({ erro: 'erro ao criar conta.' });
+    }
 });
 
-// rota de login (rf02 e us02)
-app.post('/login', async (req, res) => {
-  const { email, senha } = req.body;
-  const usuario = await prisma.trabalhador.findUnique({ where: { email } });
+// rota para atualizar a ficha medica e definir senha publica (rf03 e rf04)
+app.put('/perfil/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const dados = req.body; // aqui será nome, tipo sanguineo, senha publica, etc.
 
-  if (!usuario || !(await bcrypt.compare(senha, usuario.senhaLogin))) {
-    return res.status(401).json({ erro: 'email ou senha incorretos.' });
-  }
-  // em um projeto real, usariamos token jwt aqui. para simplificar, enviamos o id
-  res.json({ id: usuario.id, mensagem: 'login bem sucedido!' });
+        const usuarioAtualizado = await prisma.trabalhador.update({
+            where: { id },
+            data: dados
+        });
+
+        res.json({ mensagem: 'perfil atualizado com sucesso!', usuarioAtualizado });
+    } catch (error) {
+        res.status(400).json({ erro: 'erro ao atualizar perfil.' });
+    }
 });
 
-// rota para apagar a conta (rf09 e us09)
-app.delete('/conta/:id', async (req, res) => {
-  const { id } = req.params;
-  await prisma.trabalhador.delete({ where: { id } });
-  res.json({ mensagem: 'conta apagada com sucesso.' });
+// rota para o socorrista ver os dados (rf07 e rf08)
+// nota: esta rota sera protegida pela senha publica no frontend
+app.get('/ficha-publica/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const ficha = await prisma.trabalhador.findUnique({
+            where: { id },
+            select: {
+                nome: true,
+                sobrenome: true,
+                sexo: true,
+                tipoSanguineo: true,
+                contatoEmergencia: true,
+                alergias: true,
+                medicamentos: true,
+                doencas: true,
+                cirurgias: true,
+                senhaPublica: true // enviaremos para validar no front
+            }
+        });
+
+        if (!ficha) return res.status(404).json({ erro: 'ficha nao encontrada.' });
+        res.json(ficha);
+    } catch (error) {
+        res.status(500).json({ erro: 'erro ao buscar ficha.' });
+    }
 });
 
-// ligando o servidor na porta 3000
-app.listen(3000, () => {
-  console.log('servidor rodando na porta 3000');
+// ligando o servidor
+const porta = 3000;
+app.listen(porta, () => {
+    console.log(`servidor rodando em http://localhost:${porta}`);
 });
