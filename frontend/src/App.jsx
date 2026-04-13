@@ -6,38 +6,60 @@ function App() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
+  const [qrCode, setQrCode] = useState('');
 
   const realizarCadastro = async (e) => {
     e.preventDefault();
+
     try {
-      // Tenta enviar para o seu backend
-      const response = await axios.post('http://localhost:3000/cadastro', { email, senha });
-      setMensagem("✅ Sucesso! Conta criada.");
+      const response = await axios.post('http://localhost:3000/cadastro', {
+        email,
+        senha
+      });
+
+      setMensagem("✅ Conta criada com sucesso!");
+      setQrCode(response.data.qrCode);
+
     } catch (error) {
-      setMensagem("❌ Erro ao conectar com o servidor.");
+      setMensagem("❌ Erro ao criar conta.");
     }
   };
 
   return (
-    <div className="container d-flex align-items-center justify-content-center vh-100" style={{backgroundColor: '#E5F1F4'}}>
-      <div className="card shadow p-4" style={{width: '350px', borderRadius: '15px', border: 'none'}}>
-        <div className="text-center mb-4">
-          <div className="bg-info d-inline-block rounded-circle p-3 mb-2" style={{backgroundColor: '#2D87A4 !important'}}>
-            <h4 className="text-white m-0 fw-bold">ELO</h4>
-          </div>
-          <h3 className="fw-bold" style={{color: '#2D87A4'}}>CADASTRO</h3>
-        </div>
+    <div className="container d-flex align-items-center justify-content-center vh-100">
+      <div className="card p-4 shadow" style={{ width: '400px' }}>
+        <h3 className="text-center mb-4">Cadastro</h3>
 
         <form onSubmit={realizarCadastro}>
-          <input type="email" className="form-control mb-3" placeholder="E-mail" required onChange={(e) => setEmail(e.target.value)} />
-          <input type="password" name="senha" className="form-control mb-3" placeholder="Senha" required onChange={(e) => setSenha(e.target.value)} />
-          <input type="password" name="confirmar" className="form-control mb-4" placeholder="Confirmar Senha" required />
-          
-          <button type="submit" className="btn btn-info w-100 text-white fw-bold py-2" style={{backgroundColor: '#2D87A4', border: 'none'}}>
-            CRIAR MEU CADASTRO
+          <input
+            type="email"
+            className="form-control mb-3"
+            placeholder="E-mail"
+            required
+            onChange={(e) => setEmail(e.target.value)}
+          />
+
+          <input
+            type="password"
+            className="form-control mb-3"
+            placeholder="Senha"
+            required
+            onChange={(e) => setSenha(e.target.value)}
+          />
+
+          <button className="btn btn-primary w-100">
+            Criar Conta
           </button>
         </form>
-        {mensagem && <p className="mt-3 text-center small fw-bold">{mensagem}</p>}
+
+        {mensagem && <p className="mt-3 text-center">{mensagem}</p>}
+
+        {qrCode && (
+          <div className="text-center mt-4">
+            <h5>Seu QR Code:</h5>
+            <img src={qrCode} alt="QR Code" style={{ width: '200px' }} />
+          </div>
+        )}
       </div>
     </div>
   );
