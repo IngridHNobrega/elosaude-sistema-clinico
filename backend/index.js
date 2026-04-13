@@ -50,14 +50,20 @@ app.post('/cadastro', async (req, res) => {
 app.put('/perfil/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const dados = req.body; // aqui será nome, tipo sanguineo, senha publica, etc.
+        const dados = req.body;
+
+        // Se tiver senha pública, criptografa
+        if (dados.senhaPublica) {
+            dados.senhaPublica = await bcrypt.hash(dados.senhaPublica, 10);
+        }
 
         const usuarioAtualizado = await prisma.trabalhador.update({
             where: { id },
             data: dados
         });
 
-        res.json({ mensagem: 'perfil atualizado com sucesso!', usuarioAtualizado });
+        res.json({ mensagem: 'perfil atualizado com sucesso!' });
+
     } catch (error) {
         res.status(400).json({ erro: 'erro ao atualizar perfil.' });
     }
@@ -133,8 +139,9 @@ app.post('/ficha-publica/:id', async (req, res) => {
         }
 
         // 3. Verifica se a senha pública bate com a que está salva
-        if (ficha.senhaPublica !== senhaDigitada) {
-            return res.status(401).json({ erro: 'Senha pública incorreta. Acesso negado.' });
+        const senhaValida = await bcrypt.compare(senhaDigitada, ficha.senhaPublica);
+        if (!senhaValida) {
+            return res.status(401).json({ erro: 'Senha pública incorreta.' });
         }
 
         // 4. Se a senha está correta, envia os dados médicos (nunca as senhas!)
