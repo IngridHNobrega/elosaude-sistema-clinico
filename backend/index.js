@@ -28,7 +28,7 @@ app.post('/cadastro', async (req, res) => {
 
         // 2. o link que o qr code vai carregar
         // dps trocar o 'localhost:5173' pelo link real do site
-        const linkPublico = `http://localhost:5173/perfil-emergencia/${novoUsuario.id}`;
+        const linkPublico = `http://192.168.0.7/perfil-emergencia/${novoUsuario.id}`;
 
         // 3. geramos o qr code em formato de imagem (base64)
         const qrCodeImagem = await QRCode.toDataURL(linkPublico);
