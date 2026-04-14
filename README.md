@@ -35,8 +35,8 @@ BcryptJS (Segurança/Hash)
 📦 Como rodar o projeto
 1. Clone o repositório
 Bash
-git clone https://github.com/SEU_USUARIO/NOME_DO_REPOSITORIO.git
-cd NOME_DO_REPOSITORIO
+git clone https://github.com/IngridHNobrega/elosaude-sistema-clinico.git
+cd elosaude-sistema-clinico
 2. Configuração do Backend
 Bash
 cd backend
@@ -48,7 +48,7 @@ Execute as migrações do banco:
 npx prisma db push
 
 Inicie o servidor:
-node server.js
+node index.js
 
 3. Configuração do Frontend
 Bash
